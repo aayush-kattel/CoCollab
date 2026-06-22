@@ -6,6 +6,11 @@ import java.awt.*;
 
 public class MainFrame extends JFrame {
 
+    private JPanel root;
+    private CardLayout rootLayout;
+
+    // Main app panels
+    private JPanel appWrapper;
     private JPanel contentArea;
     private CardLayout cardLayout;
     private Navbar navbar;
@@ -23,24 +28,41 @@ public class MainFrame extends JFrame {
     }
 
     private void build() {
-        setLayout(new BorderLayout());
+        rootLayout = new CardLayout();
+        root = new JPanel(rootLayout);
+        root.setBackground(Theme.BG_DARK);
 
+        // ── Login screen ──
+        LoginPanel loginPanel = new LoginPanel(() -> {
+            // Guest login → show main app
+            rootLayout.show(root, "App");
+        });
+        root.add(loginPanel, "Login");
+
+        // ── Main app (navbar + content) ──
+        appWrapper = new JPanel(new BorderLayout());
+        appWrapper.setBackground(Theme.BG_DARK);
+        buildApp(appWrapper);
+        root.add(appWrapper, "App");
+
+        setContentPane(root);
+        rootLayout.show(root, "Login");
+    }
+
+    private void buildApp(JPanel container) {
         navbar = new Navbar(this::switchPanel);
-        add(navbar, BorderLayout.NORTH);
+        container.add(navbar, BorderLayout.NORTH);
 
         cardLayout = new CardLayout();
         contentArea = new JPanel(cardLayout);
         contentArea.setBackground(Theme.BG_DARK);
 
-        // Add Home panel
         contentArea.add(new HomePanel(), "Home");
-
-        // Add placeholder panels for other sections
-        contentArea.add(createPlaceholderPanel("Rooms", "🏠", "Rooms section coming soon"), "Rooms");
+        contentArea.add(createPlaceholderPanel("Rooms",       "🏠", "Rooms section coming soon"),       "Rooms");
         contentArea.add(createPlaceholderPanel("Leaderboard", "🏆", "Leaderboard section coming soon"), "Leaderboard");
-        contentArea.add(createPlaceholderPanel("Profile", "👤", "Profile section coming soon"), "Profile");
+        contentArea.add(createPlaceholderPanel("Profile",     "👤", "Profile section coming soon"),     "Profile");
 
-        add(contentArea, BorderLayout.CENTER);
+        container.add(contentArea, BorderLayout.CENTER);
         cardLayout.show(contentArea, "Home");
     }
 
@@ -56,14 +78,12 @@ public class MainFrame extends JFrame {
         card.setBorder(BorderFactory.createEmptyBorder(60, 80, 60, 80));
         card.setMaximumSize(new Dimension(400, 250));
 
-        // Icon
         JLabel iconLabel = new JLabel(icon);
         iconLabel.setFont(new Font("Segoe UI", Font.PLAIN, 56));
         iconLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         card.add(iconLabel);
         card.add(Box.createVerticalStrut(16));
 
-        // Title
         JLabel titleLabel = new JLabel(title);
         titleLabel.setFont(Theme.FONT_H2);
         titleLabel.setForeground(Theme.TEXT_PRIMARY);
@@ -71,7 +91,6 @@ public class MainFrame extends JFrame {
         card.add(titleLabel);
         card.add(Box.createVerticalStrut(8));
 
-        // Message
         JLabel msgLabel = new JLabel(message);
         msgLabel.setFont(Theme.FONT_BODY);
         msgLabel.setForeground(Theme.TEXT_SECONDARY);
