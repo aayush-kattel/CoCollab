@@ -2,88 +2,64 @@ package components;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.geom.RoundRectangle2D;
 
+//Button Design
 public class StyledButton extends JButton {
 
-    public enum Style { PRIMARY, SECONDARY, SUCCESS, DANGER, GHOST }
+    public static final int PRIMARY = 0;
+    public static final int SECONDARY = 1;
 
-    private Style style;
-    private boolean hovered = false;
-    private int radius;
-
-    public StyledButton(String text, Style style) {
-        super(text);
-        this.style = style;
-        this.radius = 10;
-        setup();
-    }
+    private int type;
+    private boolean hover = false;
 
     public StyledButton(String text) {
-        this(text, Style.PRIMARY);
+        this(text, PRIMARY);
     }
 
-    private void setup() {
+    public StyledButton(String text, int type) {
+        super(text);
+        this.type = type;
+
         setFocusPainted(false);
         setBorderPainted(false);
         setContentAreaFilled(false);
+        setForeground(type == PRIMARY ? Color.WHITE : Theme.TEXT);
+        setFont(Theme.FONT_LABEL);
         setCursor(new Cursor(Cursor.HAND_CURSOR));
-        setFont(Theme.FONT_BOLD);
-        setForeground(Theme.TEXT_PRIMARY);
 
         addMouseListener(new MouseAdapter() {
-            public void mouseEntered(MouseEvent e) { hovered = true; repaint(); }
-            public void mouseExited(MouseEvent e)  { hovered = false; repaint(); }
+            public void mouseEntered(MouseEvent e) {
+                hover = true;
+                repaint();
+            }
+            public void mouseExited(MouseEvent e) {
+                hover = false;
+                repaint();
+            }
         });
     }
-
-    public void setRadius(int r) { this.radius = r; }
 
     @Override
     protected void paintComponent(Graphics g) {
         Graphics2D g2 = (Graphics2D) g.create();
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        Color base, hover;
-        switch (style) {
-            case PRIMARY:
-                base  = Theme.ACCENT;
-                hover = new Color(79, 83, 220);
-                break;
-            case SUCCESS:
-                base  = new Color(22, 160, 70);
-                hover = new Color(15, 130, 55);
-                break;
-            case DANGER:
-                base  = new Color(200, 50, 50);
-                hover = new Color(170, 30, 30);
-                break;
-            case GHOST:
-                base  = new Color(30, 37, 60);
-                hover = new Color(40, 50, 80);
-                break;
-            default:
-                base  = new Color(30, 37, 60);
-                hover = new Color(40, 50, 80);
-        }
-
-        Color fill = hovered ? hover : base;
-
-        // Glow effect on hover for primary
-        if (hovered && style == Style.PRIMARY) {
-            g2.setColor(new Color(99, 102, 241, 60));
-            g2.fill(new RoundRectangle2D.Float(-4, -4, getWidth() + 8, getHeight() + 8, radius + 4, radius + 4));
+        Color fill;
+        if (type == PRIMARY) {
+            fill = hover ? Theme.ORANGE_DARK : Theme.ORANGE;
+        } else {
+            fill = hover ? new Color(230, 225, 215) : Theme.CARD_BG;
         }
 
         g2.setColor(fill);
-        g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), radius, radius));
+        g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 8, 8));
 
-        // Border for ghost
-        if (style == Style.GHOST || style == Style.SECONDARY) {
-            g2.setColor(Theme.BORDER_BRIGHT);
-            g2.setStroke(new BasicStroke(1f));
-            g2.draw(new RoundRectangle2D.Float(0.5f, 0.5f, getWidth() - 1, getHeight() - 1, radius, radius));
+        if (type == SECONDARY) {
+            g2.setColor(Theme.BORDER);
+            g2.draw(new RoundRectangle2D.Float(0, 0, getWidth() - 1, getHeight() - 1, 8, 8));
         }
 
         g2.dispose();

@@ -5,7 +5,6 @@ import javax.swing.*;
 
 public class Main {
     public static void main(String[] args) {
-        // Use system look but override with custom colors
         try {
             UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
         } catch (Exception e) {

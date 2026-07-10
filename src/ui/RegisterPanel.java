@@ -5,20 +5,20 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 
-public class LoginPanel extends JPanel {
+public class RegisterPanel extends JPanel {
 
-    public interface LoginListener {
-        void onGuestLogin();
-        void onGoToRegister();
+    public interface RegisterListener {
+        void onGoToLogin();
     }
 
     private static final String LOGO_PATH = "assets/logo.png";
 
-    private LoginListener listener;
-    private JTextField loginIdentifier;
-    private JPasswordField loginPassword;
+    private RegisterListener listener;
+    private JTextField regUsername;
+    private JTextField regEmail;
+    private JPasswordField regPassword;
 
-    public LoginPanel(LoginListener listener) {
+    public RegisterPanel(RegisterListener listener) {
         this.listener = listener;
         setBackground(Theme.BG);
         setLayout(new BorderLayout());
@@ -71,40 +71,44 @@ public class LoginPanel extends JPanel {
     private CardPanel buildCard() {
         CardPanel card = new CardPanel();
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
-        card.setPreferredSize(new Dimension(380, 380));
-        card.setMaximumSize(new Dimension(380, 380));
+        card.setPreferredSize(new Dimension(380, 420));
+        card.setMaximumSize(new Dimension(380, 420));
         card.setBorder(BorderFactory.createEmptyBorder(36, 36, 30, 36));
 
-        JLabel title = new JLabel("Welcome back");
+        JLabel title = new JLabel("Create account");
         title.setFont(Theme.FONT_HEADING);
         title.setForeground(Theme.TEXT);
         title.setAlignmentX(Component.LEFT_ALIGNMENT);
         card.add(title);
         card.add(Box.createVerticalStrut(20));
 
-        card.add(fieldLabel("Email or Username"));
-        loginIdentifier = new JTextField();
-        styleField(loginIdentifier);
-        card.add(loginIdentifier);
+        card.add(fieldLabel("Username"));
+        regUsername = new JTextField();
+        styleField(regUsername);
+        card.add(regUsername);
+        card.add(Box.createVerticalStrut(14));
+
+        card.add(fieldLabel("Email"));
+        regEmail = new JTextField();
+        styleField(regEmail);
+        card.add(regEmail);
         card.add(Box.createVerticalStrut(14));
 
         card.add(fieldLabel("Password"));
-        loginPassword = new JPasswordField();
-        styleField(loginPassword);
-        card.add(loginPassword);
+        regPassword = new JPasswordField();
+        styleField(regPassword);
+        card.add(regPassword);
         card.add(Box.createVerticalStrut(22));
 
-        StyledButton loginBtn = new StyledButton("Sign In");
-        loginBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
-        loginBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
-        loginBtn.addActionListener(e ->
-                JOptionPane.showMessageDialog(this, "Login is not connected to the database yet."));
-        card.add(loginBtn);
+        StyledButton regBtn = new StyledButton("Create Account");
+        regBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
+        regBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
+        regBtn.addActionListener(e ->
+                JOptionPane.showMessageDialog(this, "Registration is not connected to the database yet."));
+        card.add(regBtn);
         card.add(Box.createVerticalStrut(14));
 
-        card.add(guestLink());
-        card.add(Box.createVerticalStrut(10));
-        card.add(signUpLink());
+        card.add(loginLink());
 
         return card;
     }
@@ -129,40 +133,22 @@ public class LoginPanel extends JPanel {
                 BorderFactory.createEmptyBorder(6, 10, 6, 10)));
     }
 
-    private JPanel guestLink() {
+    private JPanel loginLink() {
         JPanel row = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
         row.setOpaque(false);
         row.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JLabel link = new JLabel("Continue as Guest");
-        link.setFont(Theme.FONT_NORMAL);
-        link.setForeground(Theme.ORANGE);
-        link.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        link.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent e) {
-                if (listener != null) listener.onGuestLogin();
-            }
-        });
-        row.add(link);
-        return row;
-    }
-
-    private JPanel signUpLink() {
-        JPanel row = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-        row.setOpaque(false);
-        row.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        JLabel text = new JLabel("Don't have an account? ");
+        JLabel text = new JLabel("Already have an account? ");
         text.setFont(Theme.FONT_NORMAL);
         text.setForeground(Theme.TEXT_GRAY);
 
-        JLabel link = new JLabel("Sign Up");
+        JLabel link = new JLabel("Sign In");
         link.setFont(Theme.FONT_LABEL);
         link.setForeground(Theme.TEAL);
         link.setCursor(new Cursor(Cursor.HAND_CURSOR));
         link.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent e) {
-                if (listener != null) listener.onGoToRegister();
+                if (listener != null) listener.onGoToLogin();
             }
         });
 
