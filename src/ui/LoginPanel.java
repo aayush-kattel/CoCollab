@@ -4,12 +4,14 @@ import components.*;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
+import auth.AuthService;
 
 public class LoginPanel extends JPanel {
 
     public interface LoginListener {
         void onGuestLogin();
         void onGoToRegister();
+        void onLoginSuccess();
     }
 
     private static final String LOGO_PATH = "assets/logo.png";
@@ -97,8 +99,23 @@ public class LoginPanel extends JPanel {
         StyledButton loginBtn = new StyledButton("Sign In");
         loginBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
         loginBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
-        loginBtn.addActionListener(e ->
-                JOptionPane.showMessageDialog(this, "Login is not connected to the database yet."));
+        loginBtn.addActionListener(e -> {
+            String identifier = loginIdentifier.getText().trim();
+            String password = new String(loginPassword.getPassword());
+
+            if (identifier.isEmpty() || password.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Please fill in both fields.");
+                return;
+            }
+
+            AuthService authService = new AuthService();
+            if (authService.login(identifier, password)) {
+                JOptionPane.showMessageDialog(this, "Login successful");
+                if (listener != null) listener.onLoginSuccess();
+            } else {
+                JOptionPane.showMessageDialog(this, "Invalid username/email or password.");
+            }
+        });
         card.add(loginBtn);
         card.add(Box.createVerticalStrut(14));
 

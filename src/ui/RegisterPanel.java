@@ -4,6 +4,7 @@ import components.*;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
+import auth.AuthService;
 
 public class RegisterPanel extends JPanel {
 
@@ -103,8 +104,24 @@ public class RegisterPanel extends JPanel {
         StyledButton regBtn = new StyledButton("Create Account");
         regBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
         regBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
-        regBtn.addActionListener(e ->
-                JOptionPane.showMessageDialog(this, "Registration is not connected to the database yet."));
+        regBtn.addActionListener(e -> {
+            String username = regUsername.getText().trim();
+            String email = regEmail.getText().trim();
+            String password = new String(regPassword.getPassword());
+
+            if (username.isEmpty() || email.isEmpty() || password.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Please fill in all fields.");
+                return;
+            }
+
+            AuthService authService = new AuthService();
+            if (authService.register(username, email, password)) {
+                JOptionPane.showMessageDialog(this, "Account created, please sign in.");
+                if (listener != null) listener.onGoToLogin();
+            } else {
+                JOptionPane.showMessageDialog(this, "Username or email already taken.");
+            }
+        });
         card.add(regBtn);
         card.add(Box.createVerticalStrut(14));
 
