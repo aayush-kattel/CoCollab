@@ -9,12 +9,9 @@ import auth.AuthService;
 public class LoginPanel extends JPanel {
 
     public interface LoginListener {
-        void onGuestLogin();
         void onGoToRegister();
-        void onLoginSuccess();
+        void onLoginSuccess(String email);
     }
-
-    private static final String LOGO_PATH = "assets/logo.png";
 
     private LoginListener listener;
     private JTextField loginIdentifier;
@@ -84,7 +81,7 @@ public class LoginPanel extends JPanel {
         card.add(title);
         card.add(Box.createVerticalStrut(20));
 
-        card.add(fieldLabel("Email or Username"));
+        card.add(fieldLabel("Email"));
         loginIdentifier = new JTextField();
         styleField(loginIdentifier);
         card.add(loginIdentifier);
@@ -100,27 +97,25 @@ public class LoginPanel extends JPanel {
         loginBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
         loginBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
         loginBtn.addActionListener(e -> {
-            String identifier = loginIdentifier.getText().trim();
+            String email = loginIdentifier.getText().trim();
             String password = new String(loginPassword.getPassword());
 
-            if (identifier.isEmpty() || password.isEmpty()) {
+            if (email.isEmpty() || password.isEmpty()) {
                 JOptionPane.showMessageDialog(this, "Please fill in both fields.");
                 return;
             }
 
             AuthService authService = new AuthService();
-            if (authService.login(identifier, password)) {
+            if (authService.login(email, password)) {
                 JOptionPane.showMessageDialog(this, "Login successful");
-                if (listener != null) listener.onLoginSuccess();
+                if (listener != null) listener.onLoginSuccess(email);
             } else {
-                JOptionPane.showMessageDialog(this, "Invalid username/email or password.");
+                JOptionPane.showMessageDialog(this, "Invalid email or password.");
             }
         });
         card.add(loginBtn);
         card.add(Box.createVerticalStrut(14));
 
-        card.add(guestLink());
-        card.add(Box.createVerticalStrut(10));
         card.add(signUpLink());
 
         return card;
@@ -144,24 +139,6 @@ public class LoginPanel extends JPanel {
         field.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(Theme.BORDER),
                 BorderFactory.createEmptyBorder(6, 10, 6, 10)));
-    }
-
-    private JPanel guestLink() {
-        JPanel row = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-        row.setOpaque(false);
-        row.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        JLabel link = new JLabel("Continue as Guest");
-        link.setFont(Theme.FONT_NORMAL);
-        link.setForeground(Theme.ORANGE);
-        link.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        link.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent e) {
-                if (listener != null) listener.onGuestLogin();
-            }
-        });
-        row.add(link);
-        return row;
     }
 
     private JPanel signUpLink() {

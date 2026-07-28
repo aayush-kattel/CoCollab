@@ -4,7 +4,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.RoundRectangle2D;
 
-// simple rounded panel
 public class CardPanel extends JPanel {
 
     private int radius = 12;

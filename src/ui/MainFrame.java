@@ -1,36 +1,54 @@
 package ui;
 import components.*;
+import auth.AuthService;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+
 public class MainFrame extends JFrame {
     private JPanel root;
     private CardLayout rootLayout;
     private JPanel contentArea;
     private CardLayout cardLayout;
     private Navbar navbar;
+    private String currentUserEmail;
 
     public MainFrame() {
         setTitle("CoCollab - Collaborative Coding Platform");
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         setMinimumSize(new Dimension(1000, 650));
         setPreferredSize(new Dimension(1200, 750));
         getContentPane().setBackground(Theme.BG);
         build();
+        attachShutdownHook();
         pack();
         setLocationRelativeTo(null);
     }
+
+    private void attachShutdownHook() {
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                if (currentUserEmail != null) {
+                    new AuthService().markOffline(currentUserEmail);
+                }
+                dispose();
+                System.exit(0);
+            }
+        });
+    }
+
     private void build() {
         rootLayout = new CardLayout();
         root = new JPanel(rootLayout);
         root.setBackground(Theme.BG);
         LoginPanel loginPanel = new LoginPanel(new LoginPanel.LoginListener() {
-            public void onGuestLogin() {
-                rootLayout.show(root, "App");
-            }
             public void onGoToRegister() {
                 rootLayout.show(root, "Register");
             }
-            public void onLoginSuccess() {
+            public void onLoginSuccess(String email) {
+                currentUserEmail = email;
                 rootLayout.show(root, "App");
             }
         });
@@ -44,6 +62,7 @@ public class MainFrame extends JFrame {
         setContentPane(root);
         rootLayout.show(root, "Login");
     }
+
     private void buildApp(JPanel container) {
         navbar = new Navbar(this::switchPanel);
         container.add(navbar, BorderLayout.NORTH);
@@ -57,6 +76,7 @@ public class MainFrame extends JFrame {
         container.add(contentArea, BorderLayout.CENTER);
         cardLayout.show(contentArea, "Home");
     }
+
     private JPanel placeholderPanel(String title, String message) {
         JPanel panel = new JPanel(new GridBagLayout());
         panel.setBackground(Theme.BG);
@@ -77,6 +97,7 @@ public class MainFrame extends JFrame {
         panel.add(card);
         return panel;
     }
+
     private void switchPanel(String section) {
         cardLayout.show(contentArea, section);
         navbar.setActiveSection(section);

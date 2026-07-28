@@ -12,10 +12,8 @@ public class RegisterPanel extends JPanel {
         void onGoToLogin();
     }
 
-    private static final String LOGO_PATH = "assets/logo.png";
-
     private RegisterListener listener;
-    private JTextField regUsername;
+    private JTextField regFullName;
     private JTextField regEmail;
     private JPasswordField regPassword;
 
@@ -83,10 +81,10 @@ public class RegisterPanel extends JPanel {
         card.add(title);
         card.add(Box.createVerticalStrut(20));
 
-        card.add(fieldLabel("Username"));
-        regUsername = new JTextField();
-        styleField(regUsername);
-        card.add(regUsername);
+        card.add(fieldLabel("Full Name"));
+        regFullName = new JTextField();
+        styleField(regFullName);
+        card.add(regFullName);
         card.add(Box.createVerticalStrut(14));
 
         card.add(fieldLabel("Email"));
@@ -105,21 +103,21 @@ public class RegisterPanel extends JPanel {
         regBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
         regBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
         regBtn.addActionListener(e -> {
-            String username = regUsername.getText().trim();
+            String fullName = regFullName.getText().trim();
             String email = regEmail.getText().trim();
             String password = new String(regPassword.getPassword());
 
-            if (username.isEmpty() || email.isEmpty() || password.isEmpty()) {
+            if (fullName.isEmpty() || email.isEmpty() || password.isEmpty()) {
                 JOptionPane.showMessageDialog(this, "Please fill in all fields.");
                 return;
             }
 
             AuthService authService = new AuthService();
-            if (authService.register(username, email, password)) {
+            if (authService.register(fullName, email, password)) {
                 JOptionPane.showMessageDialog(this, "Account created, please sign in.");
                 if (listener != null) listener.onGoToLogin();
             } else {
-                JOptionPane.showMessageDialog(this, "Username or email already taken.");
+                JOptionPane.showMessageDialog(this, "Email already taken.");
             }
         });
         card.add(regBtn);

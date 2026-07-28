@@ -11,14 +11,15 @@ import java.sql.SQLException;
 
 public class AuthService {
 
-    public boolean register(String username, String email, String password) {
+    public boolean register(String name, String email, String password) {
         String hashed = hashPassword(password);
-        String sql = "INSERT INTO users (username, email, password) VALUES (?, ?, ?)";
+        // role default 'user'; status default 'offline' (matches users.status: online/offline/busy/banned)
+        String sql = "INSERT INTO users (name, email, password, role, status) VALUES (?, ?, ?, 'user', 'offline')";
 
         try (Connection con = DBConnection.getConnection();
              PreparedStatement stmt = con.prepareStatement(sql)) {
 
-            stmt.setString(1, username);
+            stmt.setString(1, name);
             stmt.setString(2, email);
             stmt.setString(3, hashed);
             stmt.executeUpdate();
@@ -30,22 +31,48 @@ public class AuthService {
         }
     }
 
-    public boolean login(String identifier, String password) {
+    public boolean login(String email, String password) {
         String hashed = hashPassword(password);
-        String sql = "SELECT * FROM users WHERE (username = ? OR email = ?) AND password = ?";
+        String sql = "SELECT * FROM users WHERE email = ? AND password = ? AND status != 'banned'";
 
         try (Connection con = DBConnection.getConnection();
              PreparedStatement stmt = con.prepareStatement(sql)) {
 
-            stmt.setString(1, identifier);
-            stmt.setString(2, identifier);
-            stmt.setString(3, hashed);
+            stmt.setString(1, email);
+            stmt.setString(2, hashed);
             ResultSet rs = stmt.executeQuery();
-            return rs.next();
+
+            boolean success = rs.next();
+            if (success) {
+                markOnline(email);
+            }
+            return success;
 
         } catch (SQLException e) {
             System.out.println("Login failed: " + e.getMessage());
             return false;
+        }
+    }
+
+    private void markOnline(String email) {
+        String sql = "UPDATE users SET status = 'online' WHERE email = ?";
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement stmt = con.prepareStatement(sql)) {
+            stmt.setString(1, email);
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            System.out.println("Could not update online status: " + e.getMessage());
+        }
+    }
+
+    public void markOffline(String email) {
+        String sql = "UPDATE users SET status = 'offline' WHERE email = ?";
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement stmt = con.prepareStatement(sql)) {
+            stmt.setString(1, email);
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            System.out.println("Could not update offline status: " + e.getMessage());
         }
     }
 
