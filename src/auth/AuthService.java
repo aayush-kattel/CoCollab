@@ -1,6 +1,7 @@
 package auth;
 
 import db.DBConnection;
+import models.User;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -31,27 +32,31 @@ public class AuthService {
         }
     }
 
-    public boolean login(String email, String password) {
+    public User login(String email, String password) {
         String hashed = hashPassword(password);
         String sql = "SELECT * FROM users WHERE email = ? AND password = ? AND status != 'banned'";
 
-        try (Connection con = DBConnection.getConnection();
-             PreparedStatement stmt = con.prepareStatement(sql)) {
-
+        try {
+            Connection con = DBConnection.getConnection();
+            PreparedStatement stmt = con.prepareStatement(sql);
             stmt.setString(1, email);
             stmt.setString(2, hashed);
             ResultSet rs = stmt.executeQuery();
 
-            boolean success = rs.next();
-            if (success) {
+            if (rs.next()) {
+                User u = new User();
+                u.setId(rs.getInt("id"));
+                u.setName(rs.getString("name"));
+                u.setEmail(rs.getString("email"));
+                u.setRole(rs.getString("role"));
+                u.setStatus(rs.getString("status"));
                 markOnline(email);
+                return u;
             }
-            return success;
-
         } catch (SQLException e) {
             System.out.println("Login failed: " + e.getMessage());
-            return false;
         }
+        return null;
     }
 
     private void markOnline(String email) {

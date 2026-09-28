@@ -1,5 +1,6 @@
 package ui;
 
+import models.User;
 import components.*;
 import javax.swing.*;
 import java.awt.*;
@@ -10,12 +11,14 @@ public class LoginPanel extends JPanel {
 
     public interface LoginListener {
         void onGoToRegister();
-        void onLoginSuccess(String email);
+        void onLoginSuccess(User user);
     }
 
     private LoginListener listener;
     private JTextField loginIdentifier;
     private JPasswordField loginPassword;
+    private StyledButton loginBtn;
+    private JLabel errorLabel;
 
     public LoginPanel(LoginListener listener) {
         this.listener = listener;
@@ -70,8 +73,8 @@ public class LoginPanel extends JPanel {
     private CardPanel buildCard() {
         CardPanel card = new CardPanel();
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
-        card.setPreferredSize(new Dimension(380, 380));
-        card.setMaximumSize(new Dimension(380, 380));
+        card.setPreferredSize(new Dimension(380, 410));
+        card.setMaximumSize(new Dimension(380, 410));
         card.setBorder(BorderFactory.createEmptyBorder(36, 36, 30, 36));
 
         JLabel title = new JLabel("Welcome back");
@@ -91,34 +94,73 @@ public class LoginPanel extends JPanel {
         loginPassword = new JPasswordField();
         styleField(loginPassword);
         card.add(loginPassword);
-        card.add(Box.createVerticalStrut(22));
+        card.add(Box.createVerticalStrut(8));
 
-        StyledButton loginBtn = new StyledButton("Sign In");
+        errorLabel = new JLabel(" ");
+        errorLabel.setFont(Theme.FONT_LABEL);
+        errorLabel.setForeground(new Color(220, 53, 69));
+        errorLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        card.add(errorLabel);
+        card.add(Box.createVerticalStrut(8));
+
+        loginBtn = new StyledButton("Sign In");
         loginBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
         loginBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
-        loginBtn.addActionListener(e -> {
-            String email = loginIdentifier.getText().trim();
-            String password = new String(loginPassword.getPassword());
-
-            if (email.isEmpty() || password.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Please fill in both fields.");
-                return;
-            }
-
-            AuthService authService = new AuthService();
-            if (authService.login(email, password)) {
-                JOptionPane.showMessageDialog(this, "Login successful");
-                if (listener != null) listener.onLoginSuccess(email);
-            } else {
-                JOptionPane.showMessageDialog(this, "Invalid email or password.");
-            }
-        });
+        loginBtn.addActionListener(e -> handleLogin());
         card.add(loginBtn);
         card.add(Box.createVerticalStrut(14));
 
         card.add(signUpLink());
 
         return card;
+    }
+
+    private void handleLogin() {
+        String email = loginIdentifier.getText().trim();
+        String password = new String(loginPassword.getPassword());
+
+        if (email.isEmpty() || password.isEmpty()) {
+            showError("Please fill in both fields.");
+            return;
+        }
+
+        loginBtn.setEnabled(false);
+        loginBtn.setText("Signing In...");
+        clearError();
+
+        // Do the network call off the EDT so the window never freezes.
+        SwingWorker<User, Void> worker = new SwingWorker<>() {
+            @Override
+            protected User doInBackground() {
+                return new AuthService().login(email, password);
+            }
+
+            @Override
+            protected void done() {
+                loginBtn.setEnabled(true);
+                loginBtn.setText("Sign In");
+                try {
+                    User user = get();
+                    if (user != null) {
+                        if (listener != null) listener.onLoginSuccess(user);
+                    } else {
+                        showError("Invalid email or password.");
+                    }
+                } catch (Exception ex) {
+                    showError("Could not reach the server. Check your connection.");
+                    ex.printStackTrace();
+                }
+            }
+        };
+        worker.execute();
+    }
+
+    private void showError(String message) {
+        errorLabel.setText(message);
+    }
+
+    private void clearError() {
+        errorLabel.setText(" ");
     }
 
     private JLabel fieldLabel(String text) {

@@ -16,6 +16,7 @@ public class Navbar extends JPanel {
     private String active = "Home";
     private NavClickListener listener;
     private JPanel navItemsPanel;
+    private JLabel userLabel;
 
     public Navbar(NavClickListener listener) {
         this.listener = listener;
@@ -27,7 +28,6 @@ public class Navbar extends JPanel {
     }
 
     private void build() {
-        // brand section — logo icon + text, wrapped so it stays vertically centered
         JPanel brandWrap = new JPanel(new GridBagLayout());
         brandWrap.setOpaque(false);
 
@@ -49,7 +49,6 @@ public class Navbar extends JPanel {
         brandWrap.add(brandInner);
         add(brandWrap, BorderLayout.WEST);
 
-        // center — nav items, also wrapped to stay vertically centered
         JPanel centerWrap = new JPanel(new GridBagLayout());
         centerWrap.setOpaque(false);
 
@@ -61,14 +60,20 @@ public class Navbar extends JPanel {
         centerWrap.add(navItemsPanel);
         add(centerWrap, BorderLayout.CENTER);
 
-        // right — user label
         JPanel userWrap = new JPanel(new GridBagLayout());
         userWrap.setOpaque(false);
-        JLabel user = new JLabel("User  ");
-        user.setFont(Theme.FONT_LABEL);
-        user.setForeground(Theme.TEXT);
-        userWrap.add(user);
+        userLabel = new JLabel("User  ");
+        userLabel.setFont(Theme.FONT_LABEL);
+        userLabel.setForeground(Theme.TEXT);
+        userWrap.add(userLabel);
         add(userWrap, BorderLayout.EAST);
+    }
+
+    // Call this once after login so the navbar shows the real name.
+    public void setUserName(String name) {
+        if (userLabel != null && name != null && !name.isEmpty()) {
+            userLabel.setText(name + "  ");
+        }
     }
 
     private JLabel makeNavLabel(String item) {
