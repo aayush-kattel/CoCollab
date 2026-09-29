@@ -23,8 +23,6 @@ public class SocketServer implements Runnable {
                 new Thread(handler).start();
             }
         } catch (IOException e) {
-            // Normal if another instance on this machine already owns the port —
-            // that instance is acting as the host for this session.
             System.out.println("SocketServer not started (port busy or unavailable): " + e.getMessage());
         }
     }

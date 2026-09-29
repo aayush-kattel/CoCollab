@@ -37,7 +37,7 @@ public class Judge0Service {
         String apiKey = AppConfig.get("judge0.api.key");
         String apiHost = AppConfig.get("judge0.api.host");
 
-        // only URL is required (public ce.judge0.com needs no key)
+        // only URL is required for Judge0
         if (base == null || base.trim().isEmpty()) {
             result.passed = false;
             result.status = "Judge0 not configured";

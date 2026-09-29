@@ -69,7 +69,6 @@ public class Navbar extends JPanel {
         add(userWrap, BorderLayout.EAST);
     }
 
-    // Call this once after login so the navbar shows the real name.
     public void setUserName(String name) {
         if (userLabel != null && name != null && !name.isEmpty()) {
             userLabel.setText(name + "  ");

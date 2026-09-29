@@ -34,10 +34,6 @@ public class CodingRoomPanel extends JPanel {
     private int totalQuestions = 1;
     private JLabel questionLabel;
     private StyledButton prevBtn, nextBtn;
-
-    // Keeps whatever you've typed for each question while this room screen is open.
-    // Cleared when the room is closed — this is intentional, not a bug: a room is one
-    // working session, not a permanent save file.
     private Map<Integer, String> codeDrafts = new HashMap<>();
 
     // Chat / turn control
@@ -64,9 +60,18 @@ public class CodingRoomPanel extends JPanel {
         loadChallenge();
         loadChatHistory();
         connectSocket();
+        markRoomActive();
     }
 
-    // ================= Challenge loading =================
+    // waiting to active
+    private void markRoomActive() {
+        if ("waiting".equalsIgnoreCase(room.getStatus())) {
+            room.setStatus("active");
+            new Thread(() -> new RoomDAO().updateStatus(room.getId(), "active")).start();
+        }
+    }
+
+    // Challenge loading
 
     private void loadChallenge() {
         problemArea.setText("Loading challenge...");
@@ -99,7 +104,6 @@ public class CodingRoomPanel extends JPanel {
     private void goToQuestion(int questionNo) {
         if (questionNo < 1 || questionNo > totalQuestions) return;
 
-        // Save whatever's in the editor right now before switching away from this question.
         if (challenge != null) {
             codeDrafts.put(challenge.getId(), codeArea.getText());
         }
@@ -147,19 +151,23 @@ public class CodingRoomPanel extends JPanel {
             problemArea.setText(sb.toString());
             problemArea.setCaretPosition(0);
 
-            // Restore this question's draft if we already visited it this session,
-            // otherwise show the default starter code for the room's language.
             suppressCodeChangeEvent = true;
             String draft = codeDrafts.get(challenge.getId());
-            codeArea.setText(draft != null ? draft : defaultCode(room.getLanguage() != null ? room.getLanguage() : "Java"));
+            String code = draft != null ? draft : defaultCode(room.getLanguage() != null ? room.getLanguage() : "Java");
+            codeArea.setText(code);
             suppressCodeChangeEvent = false;
+
+            if (hasControl && socketConnected) {
+                socketOut.println(SocketProtocol.buildMessage(
+                        "CODE_CHANGE", room.getCode(), currentUser.getId(), currentUser.getName(), code));
+            }
         } else {
             problemTitleLabel.setText("No challenge");
             problemArea.setText("No challenge found for this question.");
         }
     }
 
-    // ================= UI =================
+    // UI
 
     private void build() {
         JPanel top = new JPanel(new BorderLayout());
@@ -198,9 +206,16 @@ public class CodingRoomPanel extends JPanel {
         nextBtn.setPreferredSize(new Dimension(90, 32));
         nextBtn.addActionListener(e -> goToQuestion(room.getCurrentQuestion() + 1));
 
+        // Close Room is only shown to the owner.
+        StyledButton closeBtn = new StyledButton("Close Room", StyledButton.SECONDARY);
+        closeBtn.setPreferredSize(new Dimension(120, 32));
+        closeBtn.setVisible(room.getOwnerId() == currentUser.getId());
+        closeBtn.addActionListener(e -> closeRoom());
+
         nav.add(prevBtn);
         nav.add(questionLabel);
         nav.add(nextBtn);
+        nav.add(closeBtn);
 
         top.add(back, BorderLayout.WEST);
         top.add(title, BorderLayout.CENTER);
@@ -383,7 +398,7 @@ public class CodingRoomPanel extends JPanel {
         return chatCard;
     }
 
-    // ================= Chat history (persisted) =================
+    // Chat history
 
     private void loadChatHistory() {
         SwingWorker<List<RoomMessage>, Void> worker = new SwingWorker<>() {
@@ -405,7 +420,7 @@ public class CodingRoomPanel extends JPanel {
         worker.execute();
     }
 
-    // ================= Socket connection =================
+    // Socket connection
 
     private void connectSocket() {
         String host = AppConfig.get("socket.host");
@@ -471,6 +486,17 @@ public class CodingRoomPanel extends JPanel {
                 break;
             case "CHAT_MESSAGE":
                 appendChat(userName + ": " + payload);
+                break;
+            case "SUBMISSION_RESULT":
+                appendChat(userName + " submitted " + payload);
+                break;
+            case "ROOM_CLOSED":
+                // Owner closed the room. Bounce back to the Rooms list.
+                JOptionPane.showMessageDialog(this,
+                        "The room has been closed by the owner.",
+                        "Room closed", JOptionPane.INFORMATION_MESSAGE);
+                disconnectSocket();
+                if (onBack != null) onBack.run();
                 break;
             case "CODE_LOCK":
                 hasControl = false;
@@ -550,7 +576,44 @@ public class CodingRoomPanel extends JPanel {
         );
     }
 
-    // ================= Submission =================
+    // Close Room (owner only)
+
+    private void closeRoom() {
+        int choice = JOptionPane.showConfirmDialog(this,
+                "Close this room?\nMembers will not be able to re-enter until you reopen it.",
+                "Close Room", JOptionPane.YES_NO_OPTION);
+        if (choice != JOptionPane.YES_OPTION) return;
+
+        new SwingWorker<Boolean, Void>() {
+            @Override
+            protected Boolean doInBackground() {
+                return new RoomDAO().updateStatus(room.getId(), "finished");
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    if (get()) {
+                        // tell everyone else in the room that it's closed
+                        if (socketConnected) {
+                            socketOut.println(SocketProtocol.buildMessage(
+                                    "ROOM_CLOSED", room.getCode(),
+                                    currentUser.getId(), currentUser.getName(), ""));
+                        }
+                        disconnectSocket();
+                        if (onBack != null) onBack.run();
+                    } else {
+                        JOptionPane.showMessageDialog(CodingRoomPanel.this,
+                                "Could not close the room.");
+                    }
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+        }.execute();
+    }
+
+    // Submission
 
     private void submitCode(StyledButton submitBtn) {
         if (challenge == null) {
@@ -595,12 +658,25 @@ public class CodingRoomPanel extends JPanel {
                     + " userId=" + currentUser.getId()
                     + " challengeId=" + challenge.getId());
 
+            final String resultText = s.getResult();
+            final int scoreText = s.getScore();
+            final int questionNo = room.getCurrentQuestion();
+
             SwingUtilities.invokeLater(() -> {
                 submitBtn.setEnabled(true);
-                statusLabel.setText(r.status + " | Score: " + s.getScore());
+                statusLabel.setText(r.status + " | Score: " + scoreText);
                 statusLabel.setForeground(r.passed ? Theme.GREEN : Theme.RED);
 
-                String msg = r.status + "\nScore: " + s.getScore() + "\n";
+                if (socketConnected) {
+                    socketOut.println(SocketProtocol.buildMessage(
+                            "SUBMISSION_RESULT",
+                            room.getCode(),
+                            currentUser.getId(),
+                            currentUser.getName(),
+                            "Q" + questionNo + ": " + resultText + " (" + scoreText + " pts)"));
+                }
+
+                String msg = r.status + "\nScore: " + scoreText + "\n";
                 if (r.stdout != null && !r.stdout.isEmpty()) msg += "\n" + r.stdout;
                 if (r.message != null && !r.message.isEmpty()) msg += "\n\n" + r.message;
                 if (r.passed && alreadyPassed) msg += "\n\n(Already solved earlier — no additional points.)";

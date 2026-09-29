@@ -9,10 +9,6 @@ public class RoomMessage {
     private int userId;
     private String message;
     private Timestamp sentAt;
-
-    // Not a real column — filled in by a JOIN with users so the UI can show a name
-    // instead of just a user id. Same pattern your Submission model already uses
-    // for roomCode/languageName.
     private String senderName;
 
     public int getId() { return id; }
@@ -27,7 +23,6 @@ public class RoomMessage {
     public String getMessage() { return message; }
     public void setMessage(String message) { this.message = message; }
 
-    public Timestamp getSentAt() { return sentAt; }
     public void setSentAt(Timestamp sentAt) { this.sentAt = sentAt; }
 
     public String getSenderName() { return senderName; }

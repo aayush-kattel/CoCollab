@@ -30,10 +30,6 @@ public class ChallengeDAO {
         return -1;
     }
 
-    public Challenge findByRoomId(int roomId) {
-        return findByRoomIdAndSequence(roomId, 1);
-    }
-
     public Challenge findByRoomIdAndSequence(int roomId, int sequenceNo) {
         String sql = "SELECT * FROM challenges WHERE room_id = ? AND sequence_no = ? LIMIT 1";
         try {
@@ -61,21 +57,6 @@ public class ChallengeDAO {
             System.out.println("countByRoomId error: " + e.getMessage());
         }
         return 0;
-    }
-
-    public List<Challenge> findAllByRoomId(int roomId) {
-        List<Challenge> list = new ArrayList<>();
-        String sql = "SELECT * FROM challenges WHERE room_id = ? ORDER BY sequence_no ASC";
-        try {
-            Connection con = DBConnection.getConnection();
-            PreparedStatement stmt = con.prepareStatement(sql);
-            stmt.setInt(1, roomId);
-            ResultSet rs = stmt.executeQuery();
-            while (rs.next()) list.add(map(rs));
-        } catch (SQLException e) {
-            System.out.println("findAllByRoomId error: " + e.getMessage());
-        }
-        return list;
     }
 
     private Challenge map(ResultSet rs) throws SQLException {

@@ -20,6 +20,7 @@ public class MainFrame extends JFrame {
     private Navbar navbar;
     private User currentUser;
 
+    private LoginPanel loginPanel;
     private HomePanel homePanel;
     private RoomsPanel roomsPanel;
     private LeaderboardPanel leaderboardPanel;
@@ -55,7 +56,7 @@ public class MainFrame extends JFrame {
         root = new JPanel(rootLayout);
         root.setBackground(Theme.BG);
 
-        LoginPanel loginPanel = new LoginPanel(new LoginPanel.LoginListener() {
+        loginPanel = new LoginPanel(new LoginPanel.LoginListener() {
             public void onGoToRegister() {
                 rootLayout.show(root, "Register");
             }
@@ -106,7 +107,7 @@ public class MainFrame extends JFrame {
         );
         roomsPanel = new RoomsPanel(currentUser, this::openCodingRoom);
         leaderboardPanel = new LeaderboardPanel();
-        profilePanel = new ProfilePanel(currentUser);
+        profilePanel = new ProfilePanel(currentUser, this::logout);
 
         contentArea.add(homePanel, "Home");
         contentArea.add(roomsPanel, "Rooms");
@@ -117,6 +118,27 @@ public class MainFrame extends JFrame {
         contentArea.revalidate();
         contentArea.repaint();
         switchPanel("Home");
+    }
+
+    private void logout() {
+        final String email = currentUser != null ? currentUser.getEmail() : null;
+        if (email != null) {
+            new Thread(() -> new AuthService().markOffline(email)).start();
+        }
+        currentUser = null;
+        homePanel = null;
+        roomsPanel = null;
+        leaderboardPanel = null;
+        profilePanel = null;
+        contentArea.removeAll();
+        contentArea.add(new JPanel(), "Home");
+        contentArea.add(new JPanel(), "CodingRoom");
+        contentArea.revalidate();
+        contentArea.repaint();
+
+        // Back to the login screen
+        loginPanel.reset();
+        rootLayout.show(root, "Login");
     }
 
     private void openCodingRoom(Room room) {

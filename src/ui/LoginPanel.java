@@ -27,6 +27,15 @@ public class LoginPanel extends JPanel {
         build();
     }
 
+    // Called by MainFrame after logout so the previous user's input is gone.
+    public void reset() {
+        loginIdentifier.setText("");
+        loginPassword.setText("");
+        clearError();
+        loginBtn.setEnabled(true);
+        loginBtn.setText("Sign In");
+    }
+
     private void build() {
         JPanel logoArea = new JPanel();
         logoArea.setOpaque(false);

@@ -51,7 +51,6 @@ public class LeaderboardPanel extends JPanel {
         card.setAlignmentX(LEFT_ALIGNMENT);
         card.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
 
-        // 3 columns — MUST match what refresh() inserts below, in the same order.
         String[] cols = {"Room Name", "Room Code", "Total Score"};
         model = new DefaultTableModel(cols, 0) {
             public boolean isCellEditable(int r, int c) {
@@ -105,7 +104,6 @@ public class LeaderboardPanel extends JPanel {
                 try {
                     model.setRowCount(0);
                     for (Object[] row : get()) {
-                        // row = { roomName, roomCode, totalScore } — matches the SQL SELECT order exactly.
                         model.addRow(row);
                     }
                 } catch (Exception ex) {

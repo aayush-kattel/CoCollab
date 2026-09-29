@@ -14,7 +14,6 @@ public class AuthService {
 
     public boolean register(String name, String email, String password) {
         String hashed = hashPassword(password);
-        // role default 'user'; status default 'offline' (matches users.status: online/offline/busy/banned)
         String sql = "INSERT INTO users (name, email, password, role, status) VALUES (?, ?, ?, 'user', 'offline')";
 
         try (Connection con = DBConnection.getConnection();

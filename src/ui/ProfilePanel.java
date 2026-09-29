@@ -15,19 +15,21 @@ import java.util.List;
 
 public class ProfilePanel extends JPanel {
 
-    private User currentUser;
+    private final User currentUser;
+    private final Runnable onLogout;   // called by MainFrame to go back to the login screen
     private UserDAO userDAO = new UserDAO();
     private SubmissionDAO submissionDAO = new SubmissionDAO();
 
     private JLabel scoreVal, solvedVal, rankVal, roomsVal;
     private DefaultTableModel historyModel;
 
-    public ProfilePanel(User currentUser) {
+    public ProfilePanel(User currentUser, Runnable onLogout) {
         this.currentUser = currentUser;
+        this.onLogout = onLogout;
         setBackground(Theme.BG);
         setLayout(new BorderLayout());
-        build(); // shell only, no DB calls
-        refresh(); // first load happens async
+        build();
+        refresh();
     }
 
     private void build() {
@@ -36,13 +38,33 @@ public class ProfilePanel extends JPanel {
         content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
         content.setBorder(BorderFactory.createEmptyBorder(28, 36, 28, 36));
 
+        JPanel header = new JPanel(new BorderLayout());
+        header.setOpaque(false);
+        header.setAlignmentX(LEFT_ALIGNMENT);
+        header.setMaximumSize(new Dimension(Integer.MAX_VALUE, 44));
+
         JLabel title = new JLabel("Profile");
         title.setFont(Theme.FONT_TITLE);
         title.setForeground(Theme.TEXT);
-        title.setAlignmentX(LEFT_ALIGNMENT);
-        content.add(title);
+        header.add(title, BorderLayout.WEST);
+
+        JButton logoutBtn = new JButton("Log out");
+        logoutBtn.setFont(Theme.FONT_LABEL);
+        logoutBtn.setBackground(Theme.RED);
+        logoutBtn.setForeground(Color.WHITE);
+        logoutBtn.setOpaque(true);
+        logoutBtn.setContentAreaFilled(true);
+        logoutBtn.setBorderPainted(false);
+        logoutBtn.setFocusPainted(false);
+        logoutBtn.setBorder(BorderFactory.createEmptyBorder(8, 18, 8, 18));
+        logoutBtn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        logoutBtn.addActionListener(e -> handleLogout());
+        header.add(logoutBtn, BorderLayout.EAST);
+
+        content.add(header);
         content.add(Box.createVerticalStrut(20));
 
+        // User info card
         CardPanel info = new CardPanel();
         info.setLayout(new BoxLayout(info, BoxLayout.Y_AXIS));
         info.setBorder(BorderFactory.createEmptyBorder(18, 20, 18, 20));
@@ -57,6 +79,7 @@ public class ProfilePanel extends JPanel {
         content.add(info);
         content.add(Box.createVerticalStrut(22));
 
+        // Stat cards
         JPanel stats = new JPanel(new GridLayout(1, 4, 14, 0));
         stats.setOpaque(false);
         stats.setMaximumSize(new Dimension(Integer.MAX_VALUE, 90));
@@ -78,6 +101,7 @@ public class ProfilePanel extends JPanel {
         content.add(stats);
         content.add(Box.createVerticalStrut(24));
 
+        // History
         JLabel hist = new JLabel("Challenge History");
         hist.setFont(Theme.FONT_HEADING);
         hist.setForeground(Theme.TEXT);
@@ -93,18 +117,29 @@ public class ProfilePanel extends JPanel {
         add(scroll, BorderLayout.CENTER);
     }
 
-    // Call any time you want fresh data — safe to call repeatedly (e.g. every nav click).
+    private void handleLogout() {
+        int choice = JOptionPane.showConfirmDialog(
+                this,
+                "Are you sure you want to log out?",
+                "Log out",
+                JOptionPane.YES_NO_OPTION);
+        if (choice == JOptionPane.YES_OPTION && onLogout != null) {
+            onLogout.run();
+        }
+    }
+
     public void refresh() {
         if (currentUser == null) return;
+        final int userId = currentUser.getId();
 
         SwingWorker<Object[], Void> worker = new SwingWorker<>() {
             @Override
             protected Object[] doInBackground() {
-                int score = userDAO.getTotalScore(currentUser.getId());
-                int solved = userDAO.getSolvedCount(currentUser.getId());
-                int rank = userDAO.getGlobalRank(currentUser.getId());
-                int rooms = userDAO.getRoomsJoined(currentUser.getId());
-                List<Submission> history = submissionDAO.findByUser(currentUser.getId());
+                int score = userDAO.getTotalScore(userId);
+                int solved = userDAO.getSolvedCount(userId);
+                int rank = userDAO.getGlobalRank(userId);
+                int rooms = userDAO.getRoomsJoined(userId);
+                List<Submission> history = submissionDAO.findByUser(userId);
                 return new Object[]{score, solved, rank, rooms, history};
             }
 

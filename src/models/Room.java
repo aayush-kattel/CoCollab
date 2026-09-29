@@ -14,7 +14,6 @@ public class Room {
     private Timestamp createdAt;
     private int currentQuestion = 1;
 
-    // for display only
     private String ownerName;
     private int memberCount;
 
@@ -91,10 +90,6 @@ public class Room {
 
     public void setStatus(String status) {
         this.status = status;
-    }
-
-    public Timestamp getCreatedAt() {
-        return createdAt;
     }
 
     public void setCreatedAt(Timestamp createdAt) {

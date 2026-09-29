@@ -59,7 +59,16 @@ public class RoomService {
         code = code.trim().toUpperCase();
         Room room = roomDAO.findByCode(code);
         if (room == null) return null;
-        if ("finished".equalsIgnoreCase(room.getStatus())) return null;
+
+        if ("finished".equalsIgnoreCase(room.getStatus())) {
+            // Only the owner can reopen a finished room.
+            if (room.getOwnerId() != userId) return null;
+
+            roomDAO.updateStatus(room.getId(), "active");
+
+            return roomDAO.findById(room.getId());
+        }
+
         roomDAO.addMember(room.getId(), userId, "member");
         return roomDAO.findById(room.getId());
     }

@@ -113,4 +113,8 @@ public class Submission {
     public void setTopic(String topic) {
         this.topic = topic;
     }
+
+    public boolean isPassed() {
+        return "Pass".equals(result);
+    }
 }

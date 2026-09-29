@@ -146,13 +146,12 @@ public class RoomsPanel extends JPanel {
         add(outer, BorderLayout.CENTER);
     }
 
-    // Opening a room does a DB lookup — off the EDT, same pattern as everything else here.
     private void openRoomByCode(String code) {
         setButtonsEnabled(false);
         SwingWorker<Room, Void> worker = new SwingWorker<>() {
             @Override
             protected Room doInBackground() {
-                return roomDAO.findByCode(code);
+                return roomService.joinRoom(code, currentUser.getId());
             }
             @Override
             protected void done() {
@@ -161,9 +160,13 @@ public class RoomsPanel extends JPanel {
                     Room room = get();
                     if (room != null && onOpenRoom != null) {
                         onOpenRoom.accept(room);
+                    } else {
+                        JOptionPane.showMessageDialog(RoomsPanel.this,
+                                "Could not open room. It may be closed.");
                     }
                 } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(RoomsPanel.this, "Could not open room. Check your connection.");
+                    JOptionPane.showMessageDialog(RoomsPanel.this,
+                            "Could not open room. Check your connection.");
                     ex.printStackTrace();
                 }
             }

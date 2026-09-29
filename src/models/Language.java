@@ -30,23 +30,14 @@ public class Language {
         this.name = name;
     }
 
-    public String getExtension() {
-        return extension;
-    }
-
     public void setExtension(String extension) {
         this.extension = extension;
-    }
-
-    public String getDefaultCode() {
-        return defaultCode;
     }
 
     public void setDefaultCode(String defaultCode) {
         this.defaultCode = defaultCode;
     }
 
-    // so combo box shows name
     public String toString() {
         return name;
     }

@@ -42,16 +42,8 @@ public class RoomMember {
         this.role = role;
     }
 
-    public Timestamp getJoinedAt() {
-        return joinedAt;
-    }
-
     public void setJoinedAt(Timestamp joinedAt) {
         this.joinedAt = joinedAt;
-    }
-
-    public String getUserName() {
-        return userName;
     }
 
     public void setUserName(String userName) {
